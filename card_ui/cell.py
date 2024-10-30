@@ -16,12 +16,11 @@ class Cell:
     def __init__(self, raw_data):
         self.raw_data = raw_data
         self.formatted_data = []
-        self.__x_size = 0  # Absolute width of cell
-        self.__y_size = 0  # Absolute height of cell
-        self.__x_pad = 0  # Padding between text and cell left/right edges
+        self.__x_size = 0
+        self.__y_size = 0
+        self.__y_window = 0
         self.__x_align = "left"
 
-    # TODO: Set up controlled access points to ensure order is always followed when adjusting some attributes
     # TODO `def process_newline_chars` in data = new line in cell
 
     @property
@@ -32,19 +31,43 @@ class Cell:
     @property
     def y_size(self):
         """Returns the vertical/y dimension of cell"""
-        return len(self.formatted_data)
+        return self.__y_size
 
-    def __wrap_text(self):
-        """Wraps text into a list, splitting into multiple lines if needed"""
-        if self.__x_size < len(self.raw_data):
-            self.formatted_data = textwrap.wrap(
-                self.raw_data, self.__x_size - self.__x_pad
-            )
+    @property
+    def y_window(self):
+        """Returns the y-window that limits rendered lines"""
+        return self.__y_window
+
+    def format_x(self, x_size: int = 0, x_align=None) -> Self:
+        """Triggers Cell reprocessing to fit the new x_size"""
+        if self.__x_size != x_size and x_size > 0:
+            self.__x_size = x_size
+        if self.__x_align != x_align and x_align is not None:
+            self.__x_align = x_align
+        self.__x_wrap_data()
+        self.__x_align_data()
+
+        # Make sure both dimensions of cell set initially
+        self.__validate_y_window()
+        return self
+
+    def format_y_window(self, y_window: int) -> Self:
+        """Adjusts the window size to meet display requirements"""
+        # Set the window
+        if y_window >= 0 and y_window != self.__y_window:
+            self.__y_window = y_window
+        # Expand if needed
+        if y_window > self.__y_size:
+            self.__y_expand_lines()
+        # Or truncate extra space if needed
+        # Note: render() limits actual output data!
         else:
-            self.formatted_data = [self.raw_data]
+            self.__y_truncate_lines()
+        return self
 
-        # Always recalc y_size after wrapping
-        self.__y_size = len(self.formatted_data)
+    def render(self) -> str:
+        """Generates the ouput `str`, limited by y-window size"""
+        return "\n".join(self.formatted_data[: self.__y_window])
 
     def __x_align_data(self):
         """
@@ -52,7 +75,7 @@ class Cell:
         Note: Requires self.wrap_text() and cannot be called directly.
         """
         # Align to available width
-        data_x_size = self.__x_size - (self.__x_pad * 2)
+        data_x_size = self.__x_size
         for i, data in enumerate(self.formatted_data):
             if self.__x_align == "left":
                 self.formatted_data[i] = f"{data}".ljust(data_x_size)
@@ -61,36 +84,30 @@ class Cell:
             elif self.__x_align == "right":
                 self.formatted_data[i] = f"{data}".rjust(data_x_size)
 
-    def __x_pad_cell(self):
-        """Pads the left/right edges of the cell, regardless of alignment type"""
-        # TODO: check for odd-number input handling
-        for i, data in enumerate(self.formatted_data):
-            if self.__x_pad > 0:
-                self.formatted_data[i] = f"{data}".center(self.__x_size)
+    def __x_wrap_data(self):
+        """Wraps text into a list, splitting into multiple lines if needed"""
+        if self.__x_size <= len(self.raw_data):
+            self.formatted_data = textwrap.wrap(self.raw_data, self.__x_size)
+        else:
+            self.formatted_data = [self.raw_data]
 
-    def resize_x(self, x_size: int = 0, x_align=None, x_pad=None) -> Self:
-        """Triggers Cell reprocessing to fit the new x_size"""
-        self.__x_size = x_size if x_size >= 0 else self.__x_size
-        self.__x_pad = x_pad if x_pad else self.__x_pad
-        self.__x_align = x_align if x_align else self.__x_align
-        self.__wrap_text()
-        self.__x_align_data()
-        self.__x_pad_cell()
-        return self
+        # Always recalc y_size after wrapping
+        self.__y_size = len(self.formatted_data)
 
-    def resize_y(self, y_size: int) -> Self:
-        """Add/removes list elements in formatted data to meet y_size requirements"""
-        if y_size >= 0:
-            # Assign y, trim formatted_data if too long
-            self.__y_size = y_size
-            self.formatted_data = self.formatted_data[: self.__y_size]
-            # If too short, add filled whitespace strings to list
-            while self.__y_size > len(self.formatted_data):
-                self.formatted_data.append(" " * self.__x_size)
-        return self
+    def __y_expand_lines(self):
+        """Adds lines of whitespace to fit y_window"""
+        while self.__y_window > len(self.formatted_data):
+            self.formatted_data.append(" " * self.__x_size)
+
+    def __y_truncate_lines(self):
+        """Removes lines of extra whitespace to fit y_window"""
+        truncation_limit = min(self.__y_window, self.__y_size)
+        self.formatted_data = self.formatted_data[:truncation_limit]
+
+    def __validate_y_window(self):
+        """Sets the initial y_window to y_size; or leave as-is if already set"""
+        self.__y_window = self.__y_size if self.__y_window == 0 else self.__y_window
 
     def __str__(self) -> str:
-        return "\n".join(self.formatted_data)
-
-
-"test data           "
+        """Returns a formatted string representation of the cell, bound by y-window size"""
+        return self.render()
