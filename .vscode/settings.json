@@ -1,0 +1,4 @@
+{
+    "jupyter.interactiveWindow.creationMode": "single",
+    "jupyter.logging.level": "warn"
+}
