@@ -14,7 +14,7 @@ class Cell:
     """
 
     def __init__(self, raw_data):
-        self.raw_data = raw_data
+        self.raw_data = str(raw_data)
         self.formatted_data = []
         self.__x_size = 0
         self.__y_size = 0
@@ -22,6 +22,13 @@ class Cell:
         self.__x_align = "left"
 
     # TODO `def process_newline_chars` in data = new line in cell
+
+    @classmethod
+    def new_cell(cls, raw_data):
+        """Generate a valid, unformatted cell with data"""
+        cell = cls(raw_data=raw_data)
+        cell.format_x()
+        return cell
 
     @property
     def x_size(self):
@@ -44,6 +51,7 @@ class Cell:
             self.__x_size = x_size
         if self.__x_align != x_align and x_align is not None:
             self.__x_align = x_align
+        self.__validate_x_size()
         self.__x_wrap_data()
         self.__x_align_data()
 
@@ -104,9 +112,13 @@ class Cell:
         truncation_limit = min(self.__y_window, self.__y_size)
         self.formatted_data = self.formatted_data[:truncation_limit]
 
+    def __validate_x_size(self):
+        """Sets the initial x_size and fixes inalid sizes by fitting to all data"""
+        self.__x_size = len(self.raw_data) if self.__x_size <= 0 else self.__x_size
+
     def __validate_y_window(self):
         """Sets the initial y_window to y_size; or leave as-is if already set"""
-        self.__y_window = self.__y_size if self.__y_window == 0 else self.__y_window
+        self.__y_window = self.__y_size if self.__y_window <= 0 else self.__y_window
 
     def __str__(self) -> str:
         """Returns a formatted string representation of the cell, bound by y-window size"""
