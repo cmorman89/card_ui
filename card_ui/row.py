@@ -5,6 +5,7 @@ from card_ui.cell import Cell
 class Row:
     """Row holds a list of Cell obj references and manages dimensions and state of
     the column and x-attributes in a cell"""
+
     def __init__(self):
         self.row_cells = []
         self.row_y_size = 0
