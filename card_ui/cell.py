@@ -45,6 +45,8 @@ class Cell:
         """Returns the y-window that limits rendered lines"""
         return self.__y_window
 
+    # Public Methods
+
     def format_x(self, x_size: int = 0, x_align=None) -> Self:
         """Triggers Cell reprocessing to fit the new x_size"""
         if self.__x_size != x_size and x_size > 0:
@@ -77,10 +79,11 @@ class Cell:
         """Generates the ouput `str`, limited by y-window size"""
         return "\n".join(self.formatted_data[: self.__y_window])
 
+    # Private Methods
+
     def __x_align_data(self):
         """
         Aligns and fills whitespace to create a formatted string
-        Note: Requires self.wrap_text() and cannot be called directly.
         """
         # Align to available width
         data_x_size = self.__x_size
