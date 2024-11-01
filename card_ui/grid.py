@@ -24,9 +24,14 @@ class Grid:
         temp_y=0,
         temp_x_align="right",
     ):
+        """Primary entrypoint into Grid class."""
         self.generate_cells()
         self.generate_cols()
         self.generate_rows()
+        # TODO: check if config is different
+        # TODO: If different, reprocess cols/rows
+        # TODO: cols/rows classes need checks if value different before recalcs
+        # TODO: Lazy recalc with cell by setting x-attrs first, format, then y-attrs, format
         # TODO: self.format_cols()
         # TODO: self.format_row()
         [
