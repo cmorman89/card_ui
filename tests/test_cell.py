@@ -64,7 +64,7 @@ def test_render():
     cell = Cell("test data")
     cell.format_x(10)
     cell.format_y_window(1)
-    expected = "test data "
+    expected = ["test data "]
     assert cell.render() == expected
 
 
@@ -74,6 +74,13 @@ def test_str_method():
     cell.format_y_window(1)
     expected = "test data "
     assert str(cell) == expected
+
+
+def test_new_cell():
+    cell = Cell.new_cell("new cell data")
+    expected = ["new cell data"]
+    assert cell.formatted_data == expected
+    assert cell.raw_data == "new cell data"
 
 
 if __name__ == "__main__":
