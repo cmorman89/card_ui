@@ -151,7 +151,7 @@ def print_grid_with_grow_effect(grid, delay=GRID_DELAY):
 
 # Initialize and format grid
 grid = Grid(matrix)
-grid.format_grid(temp_x_align="right")
+grid.update_grid(temp_x_align="right")
 
 # Run the growing effect print
 print_grid_with_grow_effect(grid)

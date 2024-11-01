@@ -40,5 +40,5 @@ def test_generate_cells(grid_fixture):
 def test_generate_cells_empty_data():
     """Test the generate_cells method with empty data."""
     empty_grid = Grid([])
-    empty_grid.generate_cells()
+    empty_grid.__generate_cells()
     assert not empty_grid.grid_cells

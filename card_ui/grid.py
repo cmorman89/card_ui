@@ -15,43 +15,68 @@ class Grid:
         self.grid_cells = []
         self.grid_cols = []
         self.grid_rows = []
+        self.grid_data_is_stale = True
+        self.grid_format_is_stale = True
 
-    def format_grid(
-        self,
-        raw_grid_data=None,
-        grid_config=None,
-        temp_x=0,
-        temp_y=0,
-        temp_x_align="right",
-    ):
+    # TODO: IMPORTANT! GENERATE DEFAULT GRID_CONFIG IF NOT PROVIDED ON ENTRY
+    def update_grid(self, raw_grid_data=None, grid_config=None):
         """Primary entrypoint into Grid class."""
-        self.generate_cells()
-        self.generate_cols()
-        self.generate_rows()
-        # TODO: check if config is different
-        # TODO: If different, reprocess cols/rows
-        # TODO: cols/rows classes need checks if value different before recalcs
-        # TODO: Lazy recalc with cell by setting x-attrs first, format, then y-attrs, format
-        # TODO: self.format_cols()
-        # TODO: self.format_row()
-        [
-            col.format_x(temp_x, col_x_align=temp_x_align) for col in self.grid_cols
-        ]  # TODO: REMOVE temp x
-        [row.format_y(temp_y) for row in self.grid_rows]  # TODO: REMOVE temp y
+
+        # Update grid data
+        if raw_grid_data != self.raw_grid_data:
+            self.raw_grid_data = raw_grid_data
+            self.__populate_grid()
+            self.grid_data_is_stale = True
+
+        # Update grid config
+        if grid_config != self.grid_config:
+            self.grid_config = grid_config
+            # self.update_config()
+            self.grid_format_is_stale = True
+
+        # Trigger a repopulation/recalculation if needed
+        if self.grid_data_is_stale:
+            self.grid_format_is_stale = True
+            # Always trigger a recalculation
+            self.__populate_grid()
+
+        if self.grid_format_is_stale:
+            self.__format_grid()
+            # TODO: Columns and Rows need to ensure their values are individually
+            #       different before triggering a relalc
+
         return self
 
-    def generate_cells(self):
-        # TODO: Add row gaps and col gaps into matrix and then allow it to resize
-        #       Even = data, odd = gap: [0:data][1:gap][2:data][n]
-        # TODO: Make outside class for data input object
+    # Methods to create and populate grid objects (Cells, Rows, Columns)
+    def __populate_grid(self):
+        """
+        Generates the Cells that make up the grid, and adds them to Row and Column class
+        objects. All are store in attributes in Grid object
+
+        NOTE: This is the workflow to update grid *data*
+        """
+        # 1. Create the Cells
+        self.__generate_cells()
+        # 2. Create the Columns and add Cells
+        self.__generate_cols()
+        # 2. Create the Rows and add Cells
+        self.__generate_rows()
+
+    def __generate_cells(self):
         """Convert the raw_matrix_data to a matrix of Cells"""
         cell_matrix = []
-        for rows in self.raw_grid_data:
+        for rows in (
+            self.raw_grid_data if self.raw_grid_data else []
+        ):  # TODO: Else exception: Empty Grid
             row_cells = [Cell.new_cell(raw_cell_data) for raw_cell_data in rows]
             cell_matrix.append(row_cells)
         self.grid_cells = cell_matrix
+        # TODO: Add row gaps and col gaps into matrix and then allow it to resize
+        #       Even = data, odd = gap: [0:data][1:gap][2:data][n]
+        # TODO: Make outside class for data input object
 
-    def generate_cols(self):
+    def __generate_cols(self):
+        """Creates Column objects and populates with Cell references"""
         grid_cols = []
         for cols in list(zip(*self.grid_cells)):
             col_obj = Column()
@@ -60,7 +85,8 @@ class Grid:
             grid_cols.append(col_obj)
         self.grid_cols = grid_cols
 
-    def generate_rows(self):
+    def __generate_rows(self):
+        """Creates Row objects and populates with Cell references"""
         grid_rows = []
         for rows in self.grid_cells:
             row_obj = Row()
@@ -68,3 +94,31 @@ class Grid:
                 row_obj.add_cell(cell)
             grid_rows.append(row_obj)
         self.grid_rows = grid_rows
+
+    # Methods to format grid objects
+
+    def __format_grid(self):
+        """
+        Uses the Row and Column classes to manage the formatting in their respective
+        groups of cells
+
+        NOTE: This is the workflow to update grid *formatting*
+        """
+        self.__format_grid_cols()
+        self.__format_grid_rows()
+
+    def __format_grid_cols(self):
+        """Iterates the Column objects in grid and triggers a recalc/reformat"""
+        for col in (
+            self.grid_cols if self.grid_cols else []
+        ):  # TODO: Else exception: Empty Columns
+            col.format_x()
+
+    def __format_grid_rows(self):
+        """Iterates the Row objects in grid and triggers a recalc/reformat"""
+        for row in (
+            self.grid_rows if self.grid_rows else []
+        ):  # TODO: Else exception: Empty Rows
+            row.format_y()
+
+    # TODO: Method group to render the grid
