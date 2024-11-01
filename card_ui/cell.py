@@ -31,28 +31,28 @@ class Cell:
         return cell
 
     @property
-    def x_size(self):
+    def x_size(self) -> int:
         """Returns the horizontal/x dimension of cell"""
         return self.__x_size
 
     @property
-    def y_size(self):
+    def y_size(self) -> int:
         """Returns the vertical/y dimension of cell"""
         return self.__y_size
 
     @property
-    def y_window(self):
+    def y_window(self) -> int:
         """Returns the y-window that limits rendered lines"""
         return self.__y_window
 
     # Public Methods
 
-    def format_x(self, x_size: int = 0, x_align=None) -> Self:
+    def format_x(self, cell_x_size: int = 0, cell_x_align=None) -> Self:
         """Triggers Cell reprocessing to fit the new x_size"""
-        if self.__x_size != x_size and x_size > 0:
-            self.__x_size = x_size
-        if self.__x_align != x_align and x_align is not None:
-            self.__x_align = x_align
+        if self.__x_size != cell_x_size and cell_x_size > 0:
+            self.__x_size = cell_x_size
+        if self.__x_align != cell_x_align and cell_x_align is not None:
+            self.__x_align = cell_x_align
         self.__validate_x_size()
         self.__x_wrap_data()
         self.__x_align_data()
@@ -75,7 +75,11 @@ class Cell:
             self.__y_truncate_lines()
         return self
 
-    def render(self) -> str:
+    def render(self) -> list:
+        """Generates the ouput `list`, limited by y-window size"""
+        return self.formatted_data[: self.__y_window]
+
+    def render_with_linebreaks(self) -> str:
         """Generates the ouput `str`, limited by y-window size"""
         return "\n".join(self.formatted_data[: self.__y_window])
 
@@ -125,4 +129,4 @@ class Cell:
 
     def __str__(self) -> str:
         """Returns a formatted string representation of the cell, bound by y-window size"""
-        return self.render()
+        return self.render_with_linebreaks()
